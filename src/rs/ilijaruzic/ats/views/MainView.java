@@ -13,7 +13,7 @@ public class MainView extends JFrame
     private MapView mapView;
     private FilterView filterView;
     private DataEntryView dataEntryView;
-    private ControlCenterView controlCenterView;
+    private SimulationView simulationView;
 
     public MainView(String title, SimulationModel model)
     {
@@ -37,8 +37,8 @@ public class MainView extends JFrame
         mapView = new MapView(model);
         filterView = new FilterView(model);
         dataEntryView = new DataEntryView();
-        controlCenterView = new ControlCenterView();
-        add(controlCenterView, BorderLayout.PAGE_END);
+        simulationView = new SimulationView();
+        add(simulationView, BorderLayout.PAGE_END);
 
         JSplitPane sideSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, filterView, dataEntryView);
         sideSplitPane.setDividerLocation(150);
@@ -72,8 +72,8 @@ public class MainView extends JFrame
         return filterView;
     }
 
-    public ControlCenterView getControlCenterView()
+    public SimulationView getSimulationView()
     {
-        return controlCenterView;
+        return simulationView;
     }
 }

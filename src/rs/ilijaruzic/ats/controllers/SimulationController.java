@@ -1,7 +1,7 @@
 package rs.ilijaruzic.ats.controllers;
 
 import rs.ilijaruzic.ats.models.*;
-import rs.ilijaruzic.ats.views.ControlCenterView;
+import rs.ilijaruzic.ats.views.SimulationView;
 import rs.ilijaruzic.ats.views.MainView;
 import rs.ilijaruzic.ats.views.MapView;
 
@@ -20,7 +20,7 @@ public class SimulationController implements IObserveNotificationModel
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     private final SimulationModel model;
-    private final ControlCenterView controlCenterView;
+    private final SimulationView simulationView;
     private final MapView mapView;
     private final InactivityController inactivityController;
 
@@ -32,13 +32,13 @@ public class SimulationController implements IObserveNotificationModel
     public SimulationController(SimulationModel model, MainView mainView, InactivityController inactivityController)
     {
         this.model = model;
-        this.controlCenterView = mainView.getControlCenterView();
-        this.inactivityController = inactivityController;
-        this.mapView = mainView.getMapView();
         this.model.addObserver(this);
-        controlCenterView.getStartResumeButton().addActionListener(e -> startOrResume());
-        controlCenterView.getPauseButton().addActionListener(e -> pause());
-        controlCenterView.getResetButton().addActionListener(e -> reset());
+        this.simulationView = mainView.getSimulationView();
+        simulationView.getStartResumeButton().addActionListener(e -> startOrResume());
+        simulationView.getPauseButton().addActionListener(e -> pause());
+        simulationView.getResetButton().addActionListener(e -> reset());
+        this.mapView = mainView.getMapView();
+        this.inactivityController = inactivityController;
         updateButtonStates();
     }
 
@@ -217,22 +217,22 @@ public class SimulationController implements IObserveNotificationModel
             switch (model.getSimulationState())
             {
                 case IDLE:
-                    controlCenterView.getStartResumeButton().setText("Start");
+                    simulationView.getStartResumeButton().setText("Start");
                     boolean canStart = model.getAirports().size() >= 2 && !model.getFlights().isEmpty();
-                    controlCenterView.getStartResumeButton().setEnabled(canStart);
-                    controlCenterView.getPauseButton().setEnabled(false);
-                    controlCenterView.getResetButton().setEnabled(false);
+                    simulationView.getStartResumeButton().setEnabled(canStart);
+                    simulationView.getPauseButton().setEnabled(false);
+                    simulationView.getResetButton().setEnabled(false);
                     break;
                 case RUNNING:
-                    controlCenterView.getStartResumeButton().setEnabled(false);
-                    controlCenterView.getPauseButton().setEnabled(true);
-                    controlCenterView.getResetButton().setEnabled(true);
+                    simulationView.getStartResumeButton().setEnabled(false);
+                    simulationView.getPauseButton().setEnabled(true);
+                    simulationView.getResetButton().setEnabled(true);
                     break;
                 case PAUSED:
-                    controlCenterView.getStartResumeButton().setText("Resume");
-                    controlCenterView.getStartResumeButton().setEnabled(true);
-                    controlCenterView.getPauseButton().setEnabled(false);
-                    controlCenterView.getResetButton().setEnabled(true);
+                    simulationView.getStartResumeButton().setText("Resume");
+                    simulationView.getStartResumeButton().setEnabled(true);
+                    simulationView.getPauseButton().setEnabled(false);
+                    simulationView.getResetButton().setEnabled(true);
                     break;
             }
         });
@@ -240,7 +240,7 @@ public class SimulationController implements IObserveNotificationModel
 
     private void setTimeLabel()
     {
-        controlCenterView.getTimeLabel().setText("Time: " + model.getSimulationTime().format(TIME_FORMATTER));
+        simulationView.getTimeLabel().setText("Time: " + model.getSimulationTime().format(TIME_FORMATTER));
     }
 
     @Override
