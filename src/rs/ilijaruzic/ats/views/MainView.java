@@ -24,6 +24,7 @@ public class MainView extends JFrame
         setSize(1600, 900);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
 
         initialize(model);
     }

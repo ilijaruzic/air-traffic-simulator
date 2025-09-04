@@ -27,8 +27,9 @@ public class FilterView extends JPanel implements IObserveNotificationModel
 
         checkboxPanel = new JPanel();
         checkboxPanel.setLayout(new BoxLayout(checkboxPanel, BoxLayout.Y_AXIS));
-
+        checkboxPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         JScrollPane scrollPane = new JScrollPane(checkboxPanel);
+        scrollPane.setBorder(null);
         add(scrollPane, BorderLayout.CENTER);
 
         setAirportCheckboxes();

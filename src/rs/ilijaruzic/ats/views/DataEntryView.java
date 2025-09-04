@@ -54,6 +54,9 @@ public class DataEntryView extends JPanel
         gbc.gridy = 0;
         gbc.weightx = 1.0;
         airportNameField = new JTextField(15);
+        airportNameField.setBackground(Color.WHITE);
+        airportNameField.setForeground(Color.BLACK);
+        airportNameField.setCaretColor(Color.BLACK);
         panel.add(airportNameField, gbc);
 
         gbc.gridx = 0;
@@ -64,6 +67,9 @@ public class DataEntryView extends JPanel
         gbc.gridy = 1;
         gbc.weightx = 1.0;
         airportCodeField = new JTextField(15);
+        airportCodeField.setBackground(Color.WHITE);
+        airportCodeField.setForeground(Color.BLACK);
+        airportCodeField.setCaretColor(Color.BLACK);
         panel.add(airportCodeField, gbc);
 
         gbc.gridx = 0;
@@ -74,6 +80,9 @@ public class DataEntryView extends JPanel
         gbc.gridy = 2;
         gbc.weightx = 1.0;
         airportXField = new JTextField(15);
+        airportXField.setBackground(Color.WHITE);
+        airportXField.setForeground(Color.BLACK);
+        airportXField.setCaretColor(Color.BLACK);
         panel.add(airportXField, gbc);
 
         gbc.gridx = 0;
@@ -84,6 +93,9 @@ public class DataEntryView extends JPanel
         gbc.gridy = 3;
         gbc.weightx = 1.0;
         airportYField = new JTextField(15);
+        airportYField.setBackground(Color.WHITE);
+        airportYField.setForeground(Color.BLACK);
+        airportYField.setCaretColor(Color.BLACK);
         panel.add(airportYField, gbc);
 
         gbc.gridx = 1;
@@ -102,13 +114,27 @@ public class DataEntryView extends JPanel
         panel.setBorder(BorderFactory.createTitledBorder("Add New Flight"));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5); // Постављамо заједничке параметре једном
+        gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         originAirportCombo = new JComboBox<>();
+        originAirportCombo.setBackground(Color.WHITE);
+        originAirportCombo.setForeground(Color.BLACK);
+
         destinationAirportCombo = new JComboBox<>();
+        destinationAirportCombo.setBackground(Color.WHITE);
+        destinationAirportCombo.setForeground(Color.BLACK);
+
         departureTimeField = new JTextField(15);
+        departureTimeField.setBackground(Color.WHITE);
+        departureTimeField.setForeground(Color.BLACK);
+        departureTimeField.setCaretColor(Color.BLACK);
+
         flightDurationField = new JTextField(15);
+        flightDurationField.setBackground(Color.WHITE);
+        flightDurationField.setForeground(Color.BLACK);
+        flightDurationField.setCaretColor(Color.BLACK);
+
         addFlightButton = new JButton("Add Flight");
 
         int currentRow = 0;
@@ -143,6 +169,7 @@ public class DataEntryView extends JPanel
     private JScrollPane createAirportsTablePanel()
     {
         airportsTable = new JTable();
+        airportsTable.getTableHeader().setReorderingAllowed(false);
         JScrollPane scrollPane = new JScrollPane(airportsTable);
         scrollPane.setBorder(BorderFactory.createTitledBorder("Airports"));
         return scrollPane;
@@ -151,6 +178,7 @@ public class DataEntryView extends JPanel
     private JScrollPane createFlightsTablePanel()
     {
         flightsTable = new JTable();
+        flightsTable.getTableHeader().setReorderingAllowed(false);
         JScrollPane scrollPane = new JScrollPane(flightsTable);
         scrollPane.setBorder(BorderFactory.createTitledBorder("Flights"));
         return scrollPane;
