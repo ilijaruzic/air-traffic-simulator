@@ -38,7 +38,7 @@ public class FileController
                 model.loadData(data.airports(), data.flights());
             } catch (Exception ex)
             {
-                ErrorHandler.showErrorMessage(view, "Failed to load file: " + ex.getMessage());
+                ErrorHandler.showErrorMessage(view, ex.getMessage(), "Failed to load file");
             }
         }
     }
@@ -60,7 +60,7 @@ public class FileController
                 JOptionPane.showMessageDialog(view, "Data saved successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
             } catch (Exception ex)
             {
-                ErrorHandler.showErrorMessage(view, "Failed to save file: " + ex.getMessage());
+                ErrorHandler.showErrorMessage(view, ex.getMessage(), "Failed to save file");
             }
         }
     }

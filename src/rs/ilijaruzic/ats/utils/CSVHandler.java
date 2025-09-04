@@ -1,6 +1,5 @@
 package rs.ilijaruzic.ats.utils;
 
-
 import rs.ilijaruzic.ats.exceptions.CSVFormatException;
 import rs.ilijaruzic.ats.models.AirportModel;
 import rs.ilijaruzic.ats.models.FlightModel;
@@ -9,6 +8,7 @@ import rs.ilijaruzic.ats.models.SimulationModel;
 import java.io.*;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,9 +40,9 @@ public final class CSVHandler
 
     public static DataContainer loadData(File file) throws IOException, CSVFormatException
     {
+        List<String> allErrors = new ArrayList<>();
         Map<String, AirportModel> airportsMap = new HashMap<>();
-        List<FlightModel> flights = new ArrayList<>();
-        List<String[]> rawFlightData = new ArrayList<>();
+        Map<String[], Integer> rawFlightDataWithLines = new HashMap<>();
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file)))
         {
@@ -51,68 +51,124 @@ public final class CSVHandler
             while ((line = reader.readLine()) != null)
             {
                 lineNumber++;
-                if (line.isBlank()) continue;
+                if (line.isBlank() || line.trim().startsWith("#")) continue;
 
-                String[] parts = line.split(",");
-                if (parts.length < 2)
-                {
-                    throw new CSVFormatException("Invalid format on line " + lineNumber + ": not enough columns.");
-                }
+                String[] parts = line.split(",", -1);
+                Arrays.setAll(parts, i -> parts[i].trim());
 
-                try
+                String type = parts.length > 0 ? parts[0] : "";
+
+                if ("AIRPORT".equalsIgnoreCase(type))
                 {
-                    String type = parts[0].trim();
-                    if ("AIRPORT".equalsIgnoreCase(type))
+                    if (parts.length != 5)
                     {
-                        if (parts.length != 5)
-                        {
-                            throw new CSVFormatException("Airport entry requires 5 columns on line " + lineNumber);
-                        }
-                        String name = parts[1].trim();
-                        String code = parts[2].trim();
-                        double x = Double.parseDouble(parts[3].trim());
-                        double y = Double.parseDouble(parts[4].trim());
-                        AirportModel airport = new AirportModel(name, code, x, y);
-                        if (airportsMap.containsKey(airport.getCode()))
-                        {
-                            throw new CSVFormatException("Duplicate airport code '" + code + "' found on line " + lineNumber);
-                        }
-                        airportsMap.put(airport.getCode(), airport);
-                    } else if ("FLIGHT".equalsIgnoreCase(type))
-                    {
-                        if (parts.length != 5)
-                            throw new CSVFormatException("Flight entry requires 5 columns on line " + lineNumber);
-                        rawFlightData.add(parts); // Чувамо сирове податке за каснију обраду
+                        allErrors.add("Line #" + lineNumber + ": Airport entry requires 5 columns.");
+                        continue;
                     }
-                } catch (NumberFormatException ex)
+                    String name = parts[1];
+                    String code = parts[2];
+                    String xStr = parts[3];
+                    String yStr = parts[4];
+
+                    List<String> validationErrors = ValidationUtils.Validate(AirportModel.class, name, code, xStr, yStr);
+                    if (!validationErrors.isEmpty())
+                    {
+                        for (String error : validationErrors)
+                        {
+                            allErrors.add("Line #" + lineNumber + ": " + error);
+                        }
+                    }
+                    if (airportsMap.containsKey(code.toUpperCase()))
+                    {
+                        allErrors.add("Line #" + lineNumber + ": Duplicate airport code '" + code.toUpperCase() + "' found.");
+                    }
+
+                    if (validationErrors.isEmpty() && !airportsMap.containsKey(code.toUpperCase()))
+                    {
+                        AirportModel airport = new AirportModel(name, code, Double.parseDouble(xStr), Double.parseDouble(yStr));
+                        airportsMap.put(airport.getCode(), airport);
+                    }
+                } else if ("FLIGHT".equalsIgnoreCase(type))
                 {
-                    throw new CSVFormatException("Invalid number format on line " + lineNumber + ".");
-                } catch (IllegalArgumentException ex)
-                {
-                    throw new CSVFormatException("Validation error for data on line " + lineNumber + ": " + ex.getMessage());
+                    if (parts.length != 5)
+                    {
+                        allErrors.add("Line #" + lineNumber + ": Flight entry requires 5 columns.");
+                        continue;
+                    }
+                    rawFlightDataWithLines.put(parts, lineNumber);
                 }
             }
         }
 
-        for (String[] flightParts : rawFlightData)
+        for (Map.Entry<String[], Integer> entry : rawFlightDataWithLines.entrySet())
         {
-            String originCode = flightParts[1].trim();
-            String destCode = flightParts[2].trim();
-            LocalTime time = LocalTime.parse(flightParts[3].trim());
-            int duration = Integer.parseInt(flightParts[4].trim());
+            String[] flightParts = entry.getKey();
+            int flightLineNumber = entry.getValue();
 
-            AirportModel origin = airportsMap.get(originCode);
-            AirportModel dest = airportsMap.get(destCode);
+            String originCode = flightParts[1];
+            String destCode = flightParts[2];
+            String timeStr = flightParts[3];
+            String durationStr = flightParts[4];
+
+            List<String> validationErrors = ValidationUtils.Validate(FlightModel.class, originCode, destCode, timeStr, durationStr);
+            if (!validationErrors.isEmpty())
+            {
+                for (String error : validationErrors)
+                {
+                    allErrors.add("Line #" + flightLineNumber + ": " + error);
+                }
+            }
+
+            AirportModel origin = airportsMap.get(originCode.toUpperCase());
+            AirportModel dest = airportsMap.get(destCode.toUpperCase());
+            boolean airportsExist = true;
 
             if (origin == null)
             {
-                throw new CSVFormatException("Flight references unknown origin airport code: " + originCode);
+                allErrors.add("Line #" + flightLineNumber + ": Flight references unknown origin airport code: " + originCode);
+                airportsExist = false;
             }
             if (dest == null)
             {
-                throw new CSVFormatException("Flight references unknown destination airport code: " + destCode);
+                allErrors.add("Line #" + flightLineNumber + ": Flight references unknown destination airport code: " + destCode);
+                airportsExist = false;
             }
 
+            if (validationErrors.isEmpty() && airportsExist)
+            {
+                for (AirportModel otherAirport : airportsMap.values())
+                {
+                    if (ValidationUtils.isAirportOnPath(origin, dest, otherAirport))
+                    {
+                        allErrors.add(String.format(
+                                "Line #%d: Flight path from %s to %s collides with airport %s.",
+                                flightLineNumber,
+                                origin.getCode(),
+                                dest.getCode(),
+                                otherAirport.getCode()
+                        ));
+                    }
+                }
+            }
+        }
+
+        if (!allErrors.isEmpty())
+        {
+            String combinedErrorMessage = String.join("\n", allErrors);
+            throw new CSVFormatException(combinedErrorMessage);
+        }
+
+        List<FlightModel> flights = new ArrayList<>();
+        for (Map.Entry<String[], Integer> entry : rawFlightDataWithLines.entrySet())
+        {
+            String[] flightParts = entry.getKey();
+            String originCode = flightParts[1].toUpperCase();
+            String destCode = flightParts[2].toUpperCase();
+            LocalTime time = LocalTime.parse(flightParts[3]);
+            int duration = Integer.parseInt(flightParts[4]);
+
+            AirportModel origin = airportsMap.get(originCode);
+            AirportModel dest = airportsMap.get(destCode);
             flights.add(new FlightModel(origin, dest, time, duration));
         }
 

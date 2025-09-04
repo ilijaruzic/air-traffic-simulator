@@ -1,0 +1,35 @@
+# --- AIRPORTS ---
+# Format: AIRPORT,Name,Code,X Coordinate,Y Coordinate
+# All coordinates are within the [-90, 90] range.
+AIRPORT,Nikola Tesla,BEG,20.31,44.82
+AIRPORT,London Heathrow,LHR,-0.45,51.47
+AIRPORT,John F Kennedy Intl,JFK,-73.78,40.64
+AIRPORT,Paris Charles de Gaulle,CDG,2.55,49.01
+AIRPORT,Frankfurt Airport,FRA,8.57,50.03
+
+# --- AIRPORTS ADDED FOR COLLISION TEST ---
+# TAB is perfectly on the straight line between TAA and TAC
+AIRPORT,Test Airport 1,TAA,10.0,10.0
+AIRPORT,Test Airport 2 (Collision Point),TAB,30.0,30.0
+AIRPORT,Test Airport 3,TAC,50.0,50.0
+
+# --- FLIGHTS ---
+# Format: FLIGHT,Origin,Destination,Departure (HH:mm),Duration (minutes)
+FLIGHT,BEG,LHR,08:30,185
+FLIGHT,JFK,LHR,21:00,420
+FLIGHT,CDG,BEG,14:15,130
+FLIGHT,FRA,JFK,10:15,500
+
+# --- COLLISION FLIGHTS (THESE SHOULD BE REJECTED BY VALIDATION) ---
+# The path from TAA to TAC goes directly through TAB.
+FLIGHT,TAA,TAC,10:00,100
+# The reverse path from TAC to TAA also goes directly through TAB.
+FLIGHT,TAC,TAA,11:00,100
+
+# --- NON-COLLISION FLIGHTS (THESE SHOULD BE ACCEPTED) ---
+# This path is short and has no airport in between.
+FLIGHT,TAA,TAB,12:00,50
+# This path is also short and has no airport in between.
+FLIGHT,TAB,TAC,13:00,50
+# A regular flight that is not collinear with anything.
+FLIGHT,BEG,FRA,16:00,1250

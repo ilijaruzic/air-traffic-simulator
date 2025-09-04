@@ -61,6 +61,23 @@ public record DataController(SimulationModel model, DataEntryView view) implemen
         String durationStr = view.getFlightDurationField().getText();
 
         List<String> errors = ValidationUtils.Validate(FlightModel.class, originCode, destCode, timeStr, durationStr);
+        if (errors.isEmpty())
+        {
+            Optional<AirportModel> originOpt = model.getAirportByCode(originCode != null ? originCode.toUpperCase() : null);
+            Optional<AirportModel> destOpt = model.getAirportByCode(destCode != null ? destCode.toUpperCase() : null);
+
+            if (originOpt.isPresent() && destOpt.isPresent())
+            {
+                for (AirportModel otherAirport : model.getAirports())
+                {
+                    if (ValidationUtils.isAirportOnPath(originOpt.get(), destOpt.get(), otherAirport))
+                    {
+                        errors.add("Flight path collides with airport: " + otherAirport.getCode());
+                    }
+                }
+            }
+        }
+
         if (!errors.isEmpty())
         {
             ErrorHandler.showErrorMessages(view, errors);
@@ -71,7 +88,7 @@ public record DataController(SimulationModel model, DataEntryView view) implemen
         {
             Optional<AirportModel> originOpt = model.getAirportByCode(originCode);
             Optional<AirportModel> destOpt = model.getAirportByCode(destCode);
-            FlightModel flight = new FlightModel(originOpt.orElse(null), destOpt.orElse(null), LocalTime.parse(timeStr), Integer.parseInt(durationStr));
+            FlightModel flight = new FlightModel(originOpt.get(), destOpt.get(), LocalTime.parse(timeStr), Integer.parseInt(durationStr));
             model.addFlight(flight);
             clearFlightInputFields();
             view.requestFocusInWindow();
@@ -98,7 +115,8 @@ public record DataController(SimulationModel model, DataEntryView view) implemen
         destCombo.setSelectedItem(selectedDest);
     }
 
-    private void updateFlightPanelState() {
+    private void updateFlightPanelState()
+    {
         boolean enable = !model.getAirports().isEmpty();
 
         view.getOriginAirportCombo().setEnabled(enable);

@@ -46,33 +46,33 @@ public final class ValidationUtils
 
             if (name == null || name.isBlank())
             {
-                errors.add("• Airport name cannot be null or blank.");
+                errors.add("Airport name cannot be null or blank.");
             }
             if (code == null || !code.matches("[A-Z]{3}"))
             {
-                errors.add("• Airport code must be exactly 3 uppercase letters.");
+                errors.add("Airport code must be exactly 3 uppercase letters.");
             }
             try
             {
                 double x = Double.parseDouble(xStr);
                 if (x < -90 || x > 90)
                 {
-                    errors.add("• X coordinate must be between -90 and 90.");
+                    errors.add("X coordinate must be between -90 and 90.");
                 }
             } catch (NumberFormatException | NullPointerException e)
             {
-                errors.add("• X coordinate must be a valid number between -90 and 90.");
+                errors.add("X coordinate must be a valid number between -90 and 90.");
             }
             try
             {
                 double y = Double.parseDouble(yStr);
                 if (y < -90 || y > 90)
                 {
-                    errors.add("• Y coordinate must be between -90 and 90.");
+                    errors.add("Y coordinate must be between -90 and 90.");
                 }
             } catch (NumberFormatException | NullPointerException e)
             {
-                errors.add("• Y coordinate must be a valid number between -90 and 90.");
+                errors.add("Y coordinate must be a valid number between -90 and 90.");
             }
         } else if (modelClass == FlightModel.class)
         {
@@ -83,35 +83,55 @@ public final class ValidationUtils
 
             if (originCode == null)
             {
-                errors.add("• Origin airport must be selected.");
+                errors.add("Origin airport must be selected.");
             }
             if (destCode == null)
             {
-                errors.add("• Destination airport must be selected.");
+                errors.add("Destination airport must be selected.");
             }
             if (originCode != null && originCode.equals(destCode))
             {
-                errors.add("• Destination airport cannot be the same as origin airport.");
+                errors.add("Destination airport cannot be the same as origin airport.");
             }
             try
             {
                 LocalTime.parse(timeStr);
             } catch (DateTimeParseException | NullPointerException e)
             {
-                errors.add("• Departure time must be in HH:mm format.");
+                errors.add("Departure time must be in HH:mm format.");
             }
             try
             {
                 int duration = Integer.parseInt(durationStr);
                 if (duration <= 0)
                 {
-                    errors.add("• Duration in minutes must be greater than 0.");
+                    errors.add("Duration in minutes must be greater than 0.");
                 }
             } catch (NumberFormatException | NullPointerException e)
             {
-                errors.add("• Duration must be a valid integer greater than 0.");
+                errors.add("Duration must be a valid integer greater than 0.");
             }
         }
         return errors;
+    }
+
+    public static boolean isAirportOnPath(AirportModel start, AirportModel end, AirportModel intermediate)
+    {
+        if (intermediate.equals(start) || intermediate.equals(end))
+        {
+            return false;
+        }
+
+        double distStartEnd = distance(start.getX(), start.getY(), end.getX(), end.getY());
+        double distStartIntermediate = distance(start.getX(), start.getY(), intermediate.getX(), intermediate.getY());
+        double distIntermediateEnd = distance(intermediate.getX(), intermediate.getY(), end.getX(), end.getY());
+
+        double epsilon = 1e-6;
+        return Math.abs((distStartIntermediate + distIntermediateEnd) - distStartEnd) < epsilon;
+    }
+
+    private static double distance(double x1, double y1, double x2, double y2)
+    {
+        return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
     }
 }
