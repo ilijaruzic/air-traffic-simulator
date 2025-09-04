@@ -15,7 +15,7 @@ public class MapController
     private final SimulationModel model;
     private final MapView view;
     private final InactivityController inactivityController;
-    private final Timer blinkTimer;
+    private final Timer timer;
 
     public MapController(SimulationModel model, MapView view, InactivityController inactivityController)
     {
@@ -23,12 +23,12 @@ public class MapController
         this.view = view;
         this.inactivityController = inactivityController;
 
-        this.blinkTimer = new Timer(300, e ->
+        this.timer = new Timer(300, e ->
         {
             view.setBlinkState(!view.getBlinkState());
             view.repaint();
         });
-        blinkTimer.setRepeats(true);
+        timer.setRepeats(true);
 
         view.addMouseListener(new MouseAdapter()
         {
@@ -41,13 +41,12 @@ public class MapController
         });
     }
 
-    private void handleMapClick(Point clickPoint)
+    private void handleMapClick(Point point)
     {
         int currentWidth = view.getWidth();
         int currentHeight = view.getHeight();
 
-        AirportModel clickedAirport = findAirportAtPoint(clickPoint, currentWidth, currentHeight);
-
+        AirportModel clickedAirport = findAirportAtPoint(point, currentWidth, currentHeight);
         if (clickedAirport != null)
         {
             AirportModel currentlySelected = model.getSelectedAirport();
@@ -69,11 +68,11 @@ public class MapController
         {
             if (!airport.isVisible()) continue;
 
-            Point airportScreenPos = CoordinateConverter.geoToScreen(airport.getX(), airport.getY(), panelWidth, panelHeight);
+            Point airportScreenPosition = CoordinateConverter.geoToScreen(airport.getX(), airport.getY(), panelWidth, panelHeight);
 
             int halfSize = MapView.AIRPORT_SIZE / 2;
-            if (Math.abs(point.x - airportScreenPos.x) <= halfSize &&
-                    Math.abs(point.y - airportScreenPos.y) <= halfSize)
+            if (Math.abs(point.x - airportScreenPosition.x) <= halfSize &&
+                    Math.abs(point.y - airportScreenPosition.y) <= halfSize)
             {
                 return airport;
             }
@@ -84,12 +83,12 @@ public class MapController
     private void startBlinking()
     {
         inactivityController.pause();
-        blinkTimer.start();
+        timer.start();
     }
 
     private void stopBlinking()
     {
-        blinkTimer.stop();
+        timer.stop();
         view.setBlinkState(false);
         view.repaint();
         inactivityController.resume();

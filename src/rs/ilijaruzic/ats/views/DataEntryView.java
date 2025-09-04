@@ -47,65 +47,38 @@ public class DataEntryView extends JPanel
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        panel.add(new JLabel("Name:"), gbc);
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.weightx = 1.0;
-        airportNameField = new JTextField(15);
-        airportNameField.setBackground(Color.WHITE);
-        airportNameField.setForeground(Color.BLACK);
-        airportNameField.setCaretColor(Color.BLACK);
-        panel.add(airportNameField, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.weightx = 0;
-        panel.add(new JLabel("Code (3 letters):"), gbc);
-        gbc.gridx = 1;
-        gbc.gridy = 1;
-        gbc.weightx = 1.0;
-        airportCodeField = new JTextField(15);
-        airportCodeField.setBackground(Color.WHITE);
-        airportCodeField.setForeground(Color.BLACK);
-        airportCodeField.setCaretColor(Color.BLACK);
-        panel.add(airportCodeField, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.weightx = 0;
-        panel.add(new JLabel("X Coordinate:"), gbc);
-        gbc.gridx = 1;
-        gbc.gridy = 2;
-        gbc.weightx = 1.0;
-        airportXField = new JTextField(15);
-        airportXField.setBackground(Color.WHITE);
-        airportXField.setForeground(Color.BLACK);
-        airportXField.setCaretColor(Color.BLACK);
-        panel.add(airportXField, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.weightx = 0;
-        panel.add(new JLabel("Y Coordinate:"), gbc);
-        gbc.gridx = 1;
-        gbc.gridy = 3;
-        gbc.weightx = 1.0;
-        airportYField = new JTextField(15);
-        airportYField.setBackground(Color.WHITE);
-        airportYField.setForeground(Color.BLACK);
-        airportYField.setCaretColor(Color.BLACK);
-        panel.add(airportYField, gbc);
+        int row = 0;
+        airportNameField = addLabeledField(panel, gbc, "Name:", row++);
+        airportCodeField = addLabeledField(panel, gbc, "Code (3 letters):", row++);
+        airportXField = addLabeledField(panel, gbc, "X Coordinate:", row++);
+        airportYField = addLabeledField(panel, gbc, "Y Coordinate:", row++);
 
         gbc.gridx = 1;
-        gbc.gridy = 4;
+        gbc.gridy = row;
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.EAST;
         addAirportButton = new JButton("Add Airport");
         panel.add(addAirportButton, gbc);
 
         return panel;
+    }
+
+    private JTextField addLabeledField(JPanel panel, GridBagConstraints gbc, String label, int row)
+    {
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.weightx = 0;
+        panel.add(new JLabel(label), gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        JTextField field = new JTextField(15);
+        field.setBackground(Color.WHITE);
+        field.setForeground(Color.BLACK);
+        field.setCaretColor(Color.BLACK);
+        panel.add(field, gbc);
+
+        return field;
     }
 
     private JPanel createFlightInputPanel()
@@ -138,10 +111,10 @@ public class DataEntryView extends JPanel
         addFlightButton = new JButton("Add Flight");
 
         int currentRow = 0;
-        addFormRow(panel, gbc, "Origin:", originAirportCombo, currentRow++);
-        addFormRow(panel, gbc, "Destination:", destinationAirportCombo, currentRow++);
-        addFormRow(panel, gbc, "Departure (HH:mm):", departureTimeField, currentRow++);
-        addFormRow(panel, gbc, "Duration (minutes):", flightDurationField, currentRow++);
+        addRow(panel, gbc, "Origin:", originAirportCombo, currentRow++);
+        addRow(panel, gbc, "Destination:", destinationAirportCombo, currentRow++);
+        addRow(panel, gbc, "Departure (HH:mm):", departureTimeField, currentRow++);
+        addRow(panel, gbc, "Duration (minutes):", flightDurationField, currentRow++);
 
         gbc.gridx = 1;
         gbc.gridy = currentRow;
@@ -153,7 +126,7 @@ public class DataEntryView extends JPanel
         return panel;
     }
 
-    private void addFormRow(JPanel panel, GridBagConstraints gbc, String labelText, JComponent component, int row)
+    private void addRow(JPanel panel, GridBagConstraints gbc, String labelText, JComponent component, int row)
     {
         gbc.gridx = 0;
         gbc.gridy = row;

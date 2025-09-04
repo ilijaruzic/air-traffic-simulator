@@ -5,15 +5,14 @@ import java.time.LocalTime;
 public class AirplaneModel
 {
     private final FlightModel flight;
-    private double currentX;
-    private double currentY;
-    private LocalTime actualTakeoffTime;
+    private double currentX,  currentY;
+    private LocalTime actualTakeoffTime = null;
 
     public AirplaneModel(FlightModel flight)
     {
         this.flight = flight;
-        this.currentX = flight.getOriginAirport().getX();
-        this.currentY = flight.getOriginAirport().getY();
+        this.currentX = flight.originAirport().getX();
+        this.currentY = flight.originAirport().getY();
     }
 
     public FlightModel getFlight()

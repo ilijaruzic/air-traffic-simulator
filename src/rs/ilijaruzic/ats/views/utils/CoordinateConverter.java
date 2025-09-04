@@ -14,11 +14,11 @@ public class CoordinateConverter
         int drawableWidth = panelWidth - 2 * padding;
         int drawableHeight = panelHeight - 2 * padding;
 
-        double normX = (geoX + 90.0) / 180.0;
-        double normY = (geoY + 90.0) / 180.0;
+        double normalizedX = (geoX + 90.0) / 180.0;
+        double normalizedY = (geoY + 90.0) / 180.0;
 
-        int screenX = (int) (normX * drawableWidth) + padding;
-        int screenY = (int) ((1 - normY) * drawableHeight) + padding;
+        int screenX = (int) (normalizedX * drawableWidth) + padding;
+        int screenY = (int) ((1 - normalizedY) * drawableHeight) + padding;
 
         return new Point(screenX, screenY);
     }

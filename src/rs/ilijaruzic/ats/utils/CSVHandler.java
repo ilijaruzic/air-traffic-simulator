@@ -33,14 +33,14 @@ public final class CSVHandler
             }
             for (FlightModel flight : model.getFlights())
             {
-                writer.println(String.join(",", "FLIGHT", flight.getOriginAirport().getCode(), flight.getDestinationAirport().getCode(), flight.getDepartureTime().toString(), String.valueOf(flight.getDurationInMinutes())));
+                writer.println(String.join(",", "FLIGHT", flight.originAirport().getCode(), flight.destinationAirport().getCode(), flight.departureTime().toString(), String.valueOf(flight.durationInMinutes())));
             }
         }
     }
 
     public static DataContainer loadData(File file) throws IOException, CSVFormatException
     {
-        List<String> allErrors = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
         Map<String, AirportModel> airportsMap = new HashMap<>();
         Map<String[], Integer> rawFlightDataWithLines = new HashMap<>();
 
@@ -52,19 +52,18 @@ public final class CSVHandler
             {
                 lineNumber++;
                 if (line.isBlank() || line.trim().startsWith("#")) continue;
-
                 String[] parts = line.split(",", -1);
                 Arrays.setAll(parts, i -> parts[i].trim());
-
                 String type = parts.length > 0 ? parts[0] : "";
 
                 if ("AIRPORT".equalsIgnoreCase(type))
                 {
                     if (parts.length != 5)
                     {
-                        allErrors.add("Line #" + lineNumber + ": Airport entry requires 5 columns.");
+                        errors.add("Line #" + lineNumber + ": Airport entry requires 5 columns.");
                         continue;
                     }
+
                     String name = parts[1];
                     String code = parts[2];
                     String xStr = parts[3];
@@ -75,12 +74,12 @@ public final class CSVHandler
                     {
                         for (String error : validationErrors)
                         {
-                            allErrors.add("Line #" + lineNumber + ": " + error);
+                            errors.add("Line #" + lineNumber + ": " + error);
                         }
                     }
                     if (airportsMap.containsKey(code.toUpperCase()))
                     {
-                        allErrors.add("Line #" + lineNumber + ": Duplicate airport code '" + code.toUpperCase() + "' found.");
+                        errors.add("Line #" + lineNumber + ": Duplicate airport code '" + code.toUpperCase() + "' found.");
                     }
 
                     if (validationErrors.isEmpty() && !airportsMap.containsKey(code.toUpperCase()))
@@ -92,7 +91,7 @@ public final class CSVHandler
                 {
                     if (parts.length != 5)
                     {
-                        allErrors.add("Line #" + lineNumber + ": Flight entry requires 5 columns.");
+                        errors.add("Line #" + lineNumber + ": Flight entry requires 5 columns.");
                         continue;
                     }
                     rawFlightDataWithLines.put(parts, lineNumber);
@@ -105,71 +104,70 @@ public final class CSVHandler
             String[] flightParts = entry.getKey();
             int flightLineNumber = entry.getValue();
 
-            String originCode = flightParts[1];
-            String destCode = flightParts[2];
-            String timeStr = flightParts[3];
-            String durationStr = flightParts[4];
+            String originAirportCode = flightParts[1];
+            String destinationAirportCode = flightParts[2];
+            String departureTimeStr = flightParts[3];
+            String durationInMinutesStr = flightParts[4];
 
-            List<String> validationErrors = ValidationUtils.Validate(FlightModel.class, originCode, destCode, timeStr, durationStr);
+            List<String> validationErrors = ValidationUtils.Validate(FlightModel.class, originAirportCode, destinationAirportCode, departureTimeStr, durationInMinutesStr);
             if (!validationErrors.isEmpty())
             {
                 for (String error : validationErrors)
                 {
-                    allErrors.add("Line #" + flightLineNumber + ": " + error);
+                    errors.add("Line #" + flightLineNumber + ": " + error);
                 }
             }
 
-            AirportModel origin = airportsMap.get(originCode.toUpperCase());
-            AirportModel dest = airportsMap.get(destCode.toUpperCase());
+            AirportModel originAirport = airportsMap.get(originAirportCode.toUpperCase());
+            AirportModel destinationAirport = airportsMap.get(destinationAirportCode.toUpperCase());
             boolean airportsExist = true;
 
-            if (origin == null)
+            if (originAirport == null)
             {
-                allErrors.add("Line #" + flightLineNumber + ": Flight references unknown origin airport code: " + originCode);
+                errors.add("Line #" + flightLineNumber + ": Flight references unknown origin airport code: " + originAirportCode);
                 airportsExist = false;
             }
-            if (dest == null)
+            if (destinationAirport == null)
             {
-                allErrors.add("Line #" + flightLineNumber + ": Flight references unknown destination airport code: " + destCode);
+                errors.add("Line #" + flightLineNumber + ": Flight references unknown destination airport code: " + destinationAirportCode);
                 airportsExist = false;
             }
 
             if (validationErrors.isEmpty() && airportsExist)
             {
-                for (AirportModel otherAirport : airportsMap.values())
+                for (AirportModel airport : airportsMap.values())
                 {
-                    if (ValidationUtils.isAirportOnPath(origin, dest, otherAirport))
+                    if (ValidationUtils.isAirportOnPath(originAirport, destinationAirport, airport))
                     {
-                        allErrors.add(String.format(
+                        errors.add(String.format(
                                 "Line #%d: Flight path from %s to %s collides with airport %s.",
                                 flightLineNumber,
-                                origin.getCode(),
-                                dest.getCode(),
-                                otherAirport.getCode()
+                                originAirport.getCode(),
+                                destinationAirport.getCode(),
+                                airport.getCode()
                         ));
                     }
                 }
             }
         }
 
-        if (!allErrors.isEmpty())
+        if (!errors.isEmpty())
         {
-            String combinedErrorMessage = String.join("\n", allErrors);
-            throw new CSVFormatException(combinedErrorMessage);
+            throw new CSVFormatException(String.join("\n", errors));
         }
 
         List<FlightModel> flights = new ArrayList<>();
         for (Map.Entry<String[], Integer> entry : rawFlightDataWithLines.entrySet())
         {
             String[] flightParts = entry.getKey();
-            String originCode = flightParts[1].toUpperCase();
-            String destCode = flightParts[2].toUpperCase();
-            LocalTime time = LocalTime.parse(flightParts[3]);
-            int duration = Integer.parseInt(flightParts[4]);
+            String originAirportCode = flightParts[1].toUpperCase();
+            String destinationAirportCode = flightParts[2].toUpperCase();
+            LocalTime departureTime = LocalTime.parse(flightParts[3]);
+            int durationInMinutes = Integer.parseInt(flightParts[4]);
 
-            AirportModel origin = airportsMap.get(originCode);
-            AirportModel dest = airportsMap.get(destCode);
-            flights.add(new FlightModel(origin, dest, time, duration));
+            AirportModel originAirport = airportsMap.get(originAirportCode);
+            AirportModel destinationAirport = airportsMap.get(destinationAirportCode);
+            flights.add(new FlightModel(originAirport, destinationAirport, departureTime, durationInMinutes));
         }
 
         return new DataContainer(new ArrayList<>(airportsMap.values()), flights);

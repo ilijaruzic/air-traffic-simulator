@@ -20,7 +20,6 @@ public class InactivityDialog extends JDialog
         setLayout(new BorderLayout(10, 10));
 
         countdownLabel = new JLabel("Application will close due to inactivity...", SwingConstants.CENTER);
-        countdownLabel.setFont(new Font("Arial", Font.BOLD, 14));
         countdownLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
 
         JButton continueButton = new JButton("Continue");

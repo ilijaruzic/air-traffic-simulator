@@ -7,11 +7,10 @@ import java.util.Queue;
 
 public class AirportModel
 {
-    private String name;
+    private final String name;
     private String code;
-    private double x, y;
+    private final double x, y;
     private boolean isVisible = true;
-
     private final Queue<FlightModel> takeoffQueue = new LinkedList<>();
     private LocalTime lastTakeoffTime = null;
 
@@ -28,10 +27,6 @@ public class AirportModel
         return name;
     }
 
-    public void setName(String name)
-    {
-        this.name = name.trim();
-    }
 
     public String getCode()
     {
@@ -48,20 +43,12 @@ public class AirportModel
         return x;
     }
 
-    public void setX(double x)
-    {
-        this.x = x;
-    }
 
     public double getY()
     {
         return y;
     }
 
-    public void setY(double y)
-    {
-        this.y = y;
-    }
 
     public boolean isVisible()
     {

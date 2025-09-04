@@ -6,44 +6,36 @@ import rs.ilijaruzic.ats.views.FilterView;
 
 import javax.swing.JCheckBox;
 
-public class FilterController implements IObserveNotificationModel
+public record FilterController(SimulationModel model, FilterView view) implements IObserveNotificationModel
 {
-    private final SimulationModel model;
-    private final FilterView view;
-
     public FilterController(SimulationModel model, FilterView view)
     {
         this.model = model;
-        this.view = view;
         this.model.addObserver(this);
-    }
-
-    private void wireUpCheckboxes()
-    {
-        for (JCheckBox checkBox : view.getAirportCheckboxes().values())
-        {
-            for (var listener : checkBox.getActionListeners())
-            {
-                checkBox.removeActionListener(listener);
-            }
-        }
-
-        view.getAirportCheckboxes().forEach((code, checkBox) ->
-        {
-            checkBox.addActionListener(e ->
-            {
-                model.getAirportByCode(code).ifPresent(airport ->
-                {
-                    airport.setVisible(checkBox.isSelected());
-                    model.notifyObservers();
-                });
-            });
-        });
+        this.view = view;
     }
 
     @Override
     public void sendNotification()
     {
-        wireUpCheckboxes();
+        for (JCheckBox checkbox : view.getAirportCheckboxes().values())
+        {
+            for (var listener : checkbox.getActionListeners())
+            {
+                checkbox.removeActionListener(listener);
+            }
+        }
+
+        view.getAirportCheckboxes().forEach((code, checkbox) ->
+        {
+            checkbox.addActionListener(e ->
+            {
+                model.getAirportByCode(code).ifPresent(airport ->
+                {
+                    airport.setVisible(checkbox.isSelected());
+                    model.notifyObservers();
+                });
+            });
+        });
     }
 }

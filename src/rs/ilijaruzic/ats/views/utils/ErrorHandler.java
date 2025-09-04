@@ -7,15 +7,12 @@ import java.util.logging.Logger;
 
 public final class ErrorHandler
 {
-    private static final Logger LOGGER = Logger.getLogger(ErrorHandler.class.getName());
-
     private ErrorHandler()
     {
     }
 
     public static void showErrorMessage(Component parent, String message, String title)
     {
-        LOGGER.log(Level.WARNING, "Displaying error to user: [{0}] - {1}", new Object[]{title, message});
         JOptionPane.showMessageDialog(
                 parent,
                 message,

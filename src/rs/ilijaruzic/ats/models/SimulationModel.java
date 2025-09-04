@@ -24,7 +24,6 @@ public class SimulationModel
     private LocalTime simulationTime = LocalTime.of(0, 0);
     private State simulationState = State.IDLE;
     private final List<AirplaneModel> activeAirplanes = new ArrayList<>();
-    private final List<FlightModel> completedFlights = new ArrayList<>();
 
     public SimulationModel()
     {
@@ -107,7 +106,6 @@ public class SimulationModel
     public void removeActiveAirplane(AirplaneModel airplane)
     {
         activeAirplanes.remove(airplane);
-        completedFlights.add(airplane.getFlight());
     }
 
     public void resetSimulation()
@@ -115,7 +113,6 @@ public class SimulationModel
         simulationTime = LocalTime.of(0, 0);
         simulationState = State.IDLE;
         activeAirplanes.clear();
-        completedFlights.clear();
         for (AirportModel airport : airports)
         {
             airport.getTakeoffQueue().clear();
@@ -138,11 +135,6 @@ public class SimulationModel
     public void addObserver(IObserveNotificationModel observer)
     {
         observers.add(observer);
-    }
-
-    public void removeObserver(IObserveNotificationModel observer)
-    {
-        observers.remove(observer);
     }
 
     public void notifyObservers()

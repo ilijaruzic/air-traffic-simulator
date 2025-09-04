@@ -38,7 +38,7 @@ public class App
         dataEntryView.setFlightTableModel(flightTableModel);
 
         InactivityController inactivityController = new InactivityController(mainView);
-        new DataController(model, mainView.getDataEntryView());
+        new DataEntryController(model, mainView.getDataEntryView());
         new FileController(model, mainView);
         new MapController(model, mainView.getMapView(), inactivityController);
         new FilterController(model, mainView.getFilterView());

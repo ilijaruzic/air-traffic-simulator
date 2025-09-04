@@ -53,10 +53,10 @@ public class FlightTableModel extends AbstractTableModel implements IObserveNoti
 
         return switch (columnIndex)
         {
-            case 0 -> flight.getOriginAirport().getCode();
-            case 1 -> flight.getDestinationAirport().getCode();
-            case 2 -> flight.getDepartureTime();
-            case 3 -> flight.getDurationInMinutes();
+            case 0 -> flight.originAirport().getCode();
+            case 1 -> flight.destinationAirport().getCode();
+            case 2 -> flight.departureTime();
+            case 3 -> flight.durationInMinutes();
             default -> null;
         };
     }

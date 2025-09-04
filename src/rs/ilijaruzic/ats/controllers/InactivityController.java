@@ -13,37 +13,37 @@ public class InactivityController
     private static final int COUNTDOWN_SECONDS = 5;
 
     private final MainView view;
-    private final Timer inactivityTimer;
+    private final Timer timer;
     private boolean isPaused = false;
 
     public InactivityController(MainView view)
     {
         this.view = view;
 
-        inactivityTimer = new Timer(INACTIVITY_TIMEOUT_MS, e -> showInactivityDialog());
-        inactivityTimer.setRepeats(false);
+        timer = new Timer(INACTIVITY_TIMEOUT_MS, e -> showInactivityDialog());
+        timer.setRepeats(false);
 
         Toolkit.getDefaultToolkit().addAWTEventListener(event ->
         {
             if (isPaused)
             {
-                inactivityTimer.restart();
+                timer.restart();
             }
         }, AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
 
-        inactivityTimer.start();
+        timer.start();
     }
 
     public void pause()
     {
         isPaused = true;
-        inactivityTimer.stop();
+        timer.stop();
     }
 
     public void resume()
     {
         isPaused = false;
-        inactivityTimer.restart();
+        timer.restart();
     }
 
     private void showInactivityDialog()
@@ -68,7 +68,7 @@ public class InactivityController
         countdownTimer.stop();
         if (dialog.didUserContinue())
         {
-            inactivityTimer.restart();
+            timer.restart();
         } else
         {
             System.exit(0);

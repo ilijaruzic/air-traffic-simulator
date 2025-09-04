@@ -21,10 +21,11 @@ public class SimulationController implements IObserveNotificationModel
 
     private final SimulationModel model;
     private final ControlCenterView controlCenterView;
-    private final InactivityController inactivityController;
     private final MapView mapView;
-    private Thread simulationThread;
-    private Timer animationTimer;
+    private final InactivityController inactivityController;
+
+    private Thread thread;
+    private Timer timer;
     private volatile boolean isRunning = false;
 
 
@@ -43,8 +44,13 @@ public class SimulationController implements IObserveNotificationModel
 
     private void startOrResume()
     {
-        if (model.getSimulationState() == SimulationModel.State.IDLE) start();
-        else if (model.getSimulationState() == SimulationModel.State.PAUSED) resume();
+        if (model.getSimulationState() == SimulationModel.State.IDLE)
+        {
+            start();
+        } else if (model.getSimulationState() == SimulationModel.State.PAUSED)
+        {
+            resume();
+        }
     }
 
     private void start()
@@ -53,11 +59,11 @@ public class SimulationController implements IObserveNotificationModel
         model.setSimulationState(SimulationModel.State.RUNNING);
         isRunning = true;
 
-        simulationThread = new Thread(this::simulationLoop);
-        simulationThread.start();
+        thread = new Thread(this::run);
+        thread.start();
 
-        animationTimer = new Timer(ANIMATION_TICK_MS, e -> runAnimationTick());
-        animationTimer.start();
+        timer = new Timer(ANIMATION_TICK_MS, e -> tick());
+        timer.start();
 
         updateButtonStates();
         mapView.requestFocusInWindow();
@@ -66,7 +72,7 @@ public class SimulationController implements IObserveNotificationModel
     private void resume()
     {
         model.setSimulationState(SimulationModel.State.RUNNING);
-        animationTimer.start();
+        timer.start();
         synchronized (this)
         {
             notify();
@@ -78,9 +84,9 @@ public class SimulationController implements IObserveNotificationModel
     private void pause()
     {
         model.setSimulationState(SimulationModel.State.PAUSED);
-        if (animationTimer != null)
+        if (timer != null)
         {
-            animationTimer.stop();
+            timer.stop();
         }
         updateButtonStates();
         mapView.requestFocusInWindow();
@@ -90,19 +96,19 @@ public class SimulationController implements IObserveNotificationModel
     {
         inactivityController.resume();
         isRunning = false;
-        if (simulationThread != null)
+        if (thread != null)
         {
-            simulationThread.interrupt();
+            thread.interrupt();
         }
-        if (animationTimer != null)
+        if (timer != null)
         {
-            animationTimer.stop();
+            timer.stop();
         }
         model.resetSimulation();
         mapView.requestFocusInWindow();
     }
 
-    private void simulationLoop()
+    private void run()
     {
         while (isRunning)
         {
@@ -117,11 +123,11 @@ public class SimulationController implements IObserveNotificationModel
                 }
                 Thread.sleep(LOGIC_TICK_MS);
 
-                LocalTime previousTime = model.getSimulationTime();
-                LocalTime newTime = previousTime.plusMinutes(SIM_MINUTES_PER_LOGIC_TICK);
-                model.setSimulationTime(newTime);
+                LocalTime currentTime = model.getSimulationTime();
+                LocalTime updatedTime = currentTime.plusMinutes(SIM_MINUTES_PER_LOGIC_TICK);
+                model.setSimulationTime(updatedTime);
 
-                enqueuePendingFlights(previousTime, newTime);
+                enqueuePendingFlights(currentTime, updatedTime);
                 launchQueuedFlights();
             } catch (InterruptedException e)
             {
@@ -131,7 +137,7 @@ public class SimulationController implements IObserveNotificationModel
         }
     }
 
-    private void runAnimationTick()
+    private void tick()
     {
         updateAirplanePositions();
         setTimeLabel();
@@ -142,13 +148,13 @@ public class SimulationController implements IObserveNotificationModel
     {
         for (FlightModel flight : model.getFlights())
         {
-            LocalTime departureTime = flight.getDepartureTime();
+            LocalTime departureTime = flight.departureTime();
             if (!departureTime.isBefore(previousTime) && departureTime.isBefore(currentTime))
             {
-                AirportModel origin = flight.getOriginAirport();
-                if (!origin.getTakeoffQueue().contains(flight))
+                AirportModel originAirport = flight.originAirport();
+                if (!originAirport.getTakeoffQueue().contains(flight))
                 {
-                    origin.getTakeoffQueue().add(flight);
+                    originAirport.getTakeoffQueue().add(flight);
                 }
             }
         }
@@ -160,15 +166,15 @@ public class SimulationController implements IObserveNotificationModel
         {
             if (!airport.getTakeoffQueue().isEmpty())
             {
-                LocalTime lastTakeoff = airport.getLastTakeoffTime();
-                if (lastTakeoff == null || ChronoUnit.MINUTES.between(lastTakeoff, model.getSimulationTime()) >= 10)
+                LocalTime lastTakeoffTime = airport.getLastTakeoffTime();
+                if (lastTakeoffTime == null || ChronoUnit.MINUTES.between(lastTakeoffTime, model.getSimulationTime()) >= 10)
                 {
-                    FlightModel flightToLaunch = airport.getTakeoffQueue().poll();
-                    if (flightToLaunch != null)
+                    FlightModel flight = airport.getTakeoffQueue().poll();
+                    if (flight != null)
                     {
-                        AirplaneModel newAirplane = new AirplaneModel(flightToLaunch);
-                        newAirplane.setActualTakeoffTime(model.getSimulationTime());
-                        model.addActiveAirplane(newAirplane);
+                        AirplaneModel airplane = new AirplaneModel(flight);
+                        airplane.setActualTakeoffTime(model.getSimulationTime());
+                        model.addActiveAirplane(airplane);
                         airport.setLastTakeoffTime(model.getSimulationTime());
                     }
                 }
@@ -178,27 +184,30 @@ public class SimulationController implements IObserveNotificationModel
 
     private void updateAirplanePositions()
     {
-        List<AirplaneModel> landedAirplanes = new ArrayList<>();
+        List<AirplaneModel> airplanes = new ArrayList<>();
         for (AirplaneModel airplane : model.getActiveAirplanes())
         {
             FlightModel flight = airplane.getFlight();
             long secondsSinceTakeoff = ChronoUnit.SECONDS.between(airplane.getActualTakeoffTime(), model.getSimulationTime());
-            long totalDurationSeconds = flight.getDurationInMinutes() * 60L;
-            if (secondsSinceTakeoff < 0) secondsSinceTakeoff = 0;
-            if (secondsSinceTakeoff >= totalDurationSeconds)
+            long durationInSeconds = flight.durationInMinutes() * 60L;
+            if (secondsSinceTakeoff < 0)
             {
-                landedAirplanes.add(airplane);
+                secondsSinceTakeoff = 0;
+            }
+            if (secondsSinceTakeoff >= durationInSeconds)
+            {
+                airplanes.add(airplane);
                 continue;
             }
-            double progress = (double) secondsSinceTakeoff / totalDurationSeconds;
-            double startX = flight.getOriginAirport().getX();
-            double startY = flight.getOriginAirport().getY();
-            double endX = flight.getDestinationAirport().getX();
-            double endY = flight.getDestinationAirport().getY();
+            double progress = (double) secondsSinceTakeoff / durationInSeconds;
+            double startX = flight.originAirport().getX();
+            double startY = flight.originAirport().getY();
+            double endX = flight.destinationAirport().getX();
+            double endY = flight.destinationAirport().getY();
             airplane.setCurrentX(startX + (endX - startX) * progress);
             airplane.setCurrentY(startY + (endY - startY) * progress);
         }
-        landedAirplanes.forEach(model::removeActiveAirplane);
+        airplanes.forEach(model::removeActiveAirplane);
     }
 
     private void updateButtonStates()

@@ -10,9 +10,9 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
-public record DataController(SimulationModel model, DataEntryView view) implements IObserveNotificationModel
+public record DataEntryController(SimulationModel model, DataEntryView view) implements IObserveNotificationModel
 {
-    public DataController(SimulationModel model, DataEntryView view)
+    public DataEntryController(SimulationModel model, DataEntryView view)
     {
         this.model = model;
         this.view = view;
@@ -55,30 +55,28 @@ public record DataController(SimulationModel model, DataEntryView view) implemen
 
     private void addFlight()
     {
-        String originCode = (String) view.getOriginAirportCombo().getSelectedItem();
-        String destCode = (String) view.getDestinationAirportCombo().getSelectedItem();
-        String timeStr = view.getDepartureTimeField().getText();
-        String durationStr = view.getFlightDurationField().getText();
+        String originAirportCode = (String) view.getOriginAirportCombo().getSelectedItem();
+        String destinationAirportCode = (String) view.getDestinationAirportCombo().getSelectedItem();
+        String departureTimeStr = view.getDepartureTimeField().getText();
+        String durationInMinutesStr = view.getFlightDurationField().getText();
 
-        List<String> errors = ValidationUtils.Validate(FlightModel.class, originCode, destCode, timeStr, durationStr);
+        List<String> errors = ValidationUtils.Validate(FlightModel.class, originAirportCode, destinationAirportCode, departureTimeStr, durationInMinutesStr);
         if (errors.isEmpty())
         {
-            Optional<AirportModel> originOpt = model.getAirportByCode(originCode != null ? originCode.toUpperCase() : null);
-            Optional<AirportModel> destOpt = model.getAirportByCode(destCode != null ? destCode.toUpperCase() : null);
+            Optional<AirportModel> originAirportOption = model.getAirportByCode(originAirportCode != null ? originAirportCode.toUpperCase() : null);
+            Optional<AirportModel> destinationAirportOption = model.getAirportByCode(destinationAirportCode != null ? destinationAirportCode.toUpperCase() : null);
 
-            if (originOpt.isPresent() && destOpt.isPresent())
+            if (originAirportOption.isPresent() && destinationAirportOption.isPresent())
             {
                 for (AirportModel otherAirport : model.getAirports())
                 {
-                    if (ValidationUtils.isAirportOnPath(originOpt.get(), destOpt.get(), otherAirport))
+                    if (ValidationUtils.isAirportOnPath(originAirportOption.get(), destinationAirportOption.get(), otherAirport))
                     {
                         errors.add("Flight path collides with airport: " + otherAirport.getCode());
                     }
                 }
             }
-        }
-
-        if (!errors.isEmpty())
+        } else
         {
             ErrorHandler.showErrorMessages(view, errors);
             return;
@@ -86,12 +84,15 @@ public record DataController(SimulationModel model, DataEntryView view) implemen
 
         try
         {
-            Optional<AirportModel> originOpt = model.getAirportByCode(originCode);
-            Optional<AirportModel> destOpt = model.getAirportByCode(destCode);
-            FlightModel flight = new FlightModel(originOpt.get(), destOpt.get(), LocalTime.parse(timeStr), Integer.parseInt(durationStr));
-            model.addFlight(flight);
-            clearFlightInputFields();
-            view.requestFocusInWindow();
+            Optional<AirportModel> originAirportOption = model.getAirportByCode(originAirportCode);
+            Optional<AirportModel> destinationAirportOption = model.getAirportByCode(destinationAirportCode);
+            if (originAirportOption.isPresent() && destinationAirportOption.isPresent())
+            {
+                FlightModel flight = new FlightModel(originAirportOption.get(), destinationAirportOption.get(), LocalTime.parse(departureTimeStr), Integer.parseInt(durationInMinutesStr));
+                model.addFlight(flight);
+                clearFlightInputFields();
+                view.requestFocusInWindow();
+            }
         } catch (Exception ex)
         {
             ErrorHandler.showErrorMessage(view, ex.getMessage());
@@ -100,25 +101,24 @@ public record DataController(SimulationModel model, DataEntryView view) implemen
 
     private void updateAirportComboBoxes()
     {
-        String selectedOrigin = (String) view.getOriginAirportCombo().getSelectedItem();
-        String selectedDest = (String) view.getDestinationAirportCombo().getSelectedItem();
-        JComboBox<String> originCombo = view.getOriginAirportCombo();
-        JComboBox<String> destCombo = view.getDestinationAirportCombo();
-        originCombo.removeAllItems();
-        destCombo.removeAllItems();
+        String selectedOriginAirport = (String) view.getOriginAirportCombo().getSelectedItem();
+        String selectedDestinationAirport = (String) view.getDestinationAirportCombo().getSelectedItem();
+        JComboBox<String> originAirportCombo = view.getOriginAirportCombo();
+        JComboBox<String> destinationAirportCombo = view.getDestinationAirportCombo();
+        originAirportCombo.removeAllItems();
+        destinationAirportCombo.removeAllItems();
         for (AirportModel airport : model.getAirports())
         {
-            originCombo.addItem(airport.getCode());
-            destCombo.addItem(airport.getCode());
+            originAirportCombo.addItem(airport.getCode());
+            destinationAirportCombo.addItem(airport.getCode());
         }
-        originCombo.setSelectedItem(selectedOrigin);
-        destCombo.setSelectedItem(selectedDest);
+        originAirportCombo.setSelectedItem(selectedOriginAirport);
+        destinationAirportCombo.setSelectedItem(selectedDestinationAirport);
     }
 
     private void updateFlightPanelState()
     {
         boolean enable = !model.getAirports().isEmpty();
-
         view.getOriginAirportCombo().setEnabled(enable);
         view.getDestinationAirportCombo().setEnabled(enable);
         view.getDepartureTimeField().setEnabled(enable);

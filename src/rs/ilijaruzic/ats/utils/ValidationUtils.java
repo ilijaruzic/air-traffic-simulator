@@ -76,33 +76,33 @@ public final class ValidationUtils
             }
         } else if (modelClass == FlightModel.class)
         {
-            String originCode = args[0];
-            String destCode = args[1];
-            String timeStr = args[2];
-            String durationStr = args[3];
+            String originAirportCode = args[0];
+            String destinationAirportCode = args[1];
+            String departureTimeStr = args[2];
+            String durationInMinutesStr = args[3];
 
-            if (originCode == null)
+            if (originAirportCode == null)
             {
                 errors.add("Origin airport must be selected.");
             }
-            if (destCode == null)
+            if (destinationAirportCode == null)
             {
                 errors.add("Destination airport must be selected.");
             }
-            if (originCode != null && originCode.equals(destCode))
+            if (originAirportCode != null && originAirportCode.equals(destinationAirportCode))
             {
                 errors.add("Destination airport cannot be the same as origin airport.");
             }
             try
             {
-                LocalTime.parse(timeStr);
+                LocalTime.parse(departureTimeStr);
             } catch (DateTimeParseException | NullPointerException e)
             {
                 errors.add("Departure time must be in HH:mm format.");
             }
             try
             {
-                int duration = Integer.parseInt(durationStr);
+                int duration = Integer.parseInt(durationInMinutesStr);
                 if (duration <= 0)
                 {
                     errors.add("Duration in minutes must be greater than 0.");
@@ -115,19 +115,18 @@ public final class ValidationUtils
         return errors;
     }
 
-    public static boolean isAirportOnPath(AirportModel start, AirportModel end, AirportModel intermediate)
+    public static boolean isAirportOnPath(AirportModel originAirport, AirportModel destinationAirport, AirportModel intermediateAirport)
     {
-        if (intermediate.equals(start) || intermediate.equals(end))
+        if (intermediateAirport.equals(originAirport) || intermediateAirport.equals(destinationAirport))
         {
             return false;
         }
 
-        double distStartEnd = distance(start.getX(), start.getY(), end.getX(), end.getY());
-        double distStartIntermediate = distance(start.getX(), start.getY(), intermediate.getX(), intermediate.getY());
-        double distIntermediateEnd = distance(intermediate.getX(), intermediate.getY(), end.getX(), end.getY());
+        double distanceOriginDestination = distance(originAirport.getX(), originAirport.getY(), destinationAirport.getX(), destinationAirport.getY());
+        double distanceOriginIntermediate = distance(originAirport.getX(), originAirport.getY(), intermediateAirport.getX(), intermediateAirport.getY());
+        double distanceIntermediateDestination = distance(intermediateAirport.getX(), intermediateAirport.getY(), destinationAirport.getX(), destinationAirport.getY());
 
-        double epsilon = 1e-6;
-        return Math.abs((distStartIntermediate + distIntermediateEnd) - distStartEnd) < epsilon;
+        return Math.abs((distanceOriginIntermediate + distanceIntermediateDestination) - distanceOriginDestination) < 1e-6;
     }
 
     private static double distance(double x1, double y1, double x2, double y2)

@@ -42,9 +42,9 @@ public class FilterView extends JPanel implements IObserveNotificationModel
 
         for (AirportModel airport : model.getAirports())
         {
-            JCheckBox cb = new JCheckBox(airport.toString(), airport.isVisible());
-            airportCheckboxes.put(airport.getCode(), cb);
-            checkboxPanel.add(cb);
+            JCheckBox checkbox = new JCheckBox(airport.toString(), airport.isVisible());
+            airportCheckboxes.put(airport.getCode(), checkbox);
+            checkboxPanel.add(checkbox);
         }
 
         revalidate();
